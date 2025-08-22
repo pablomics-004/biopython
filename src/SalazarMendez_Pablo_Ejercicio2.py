@@ -18,11 +18,11 @@ class gene():
         self.nt = ''
 
     def gc_content(self) -> None:
-        self.gc_percentage += (
+        self.gc_percentage = (
             (total_gc := self.seq.count('G') + self.seq.count('C')) / (total_gc + self.seq.count('A') + self.seq.count('T'))
         ) * 100
     
-    def len_calc(self) -> int:
+    def len_calc(self) -> None:
         self.length += len(self.seq)
 
     def first_frame(self):
@@ -49,7 +49,7 @@ class gene():
                 frame_codons.append(codon)
         return frame_codons
     
-    def frame(self):
+    def get_frame_codons(self):
         match self.frame:
             case 1:
                 return self.first_frame()
@@ -61,20 +61,7 @@ class gene():
                 raise ValueError('\n[ERROR] No such frame have been found.\n')
     
     def base_type(self) -> None:
-        uracil = self.seq.count('U')
-        if uracil > 0:
-            self.nt = 'RNA'
-        else:
-            self.nt = 'DNA'
-    
-    def possible_stop_cods(self):
-        self.base_type()
-        match self.nt:
-            case 'RNA':
-                stop = {'UAG', 'UAA', 'UGA'}
-            case 'DNA':
-                stop = {'TAG', 'TAA', 'TGA'}
-        pass
+        self.nt = 'RNA' if 'U' in self.seq else 'DNA'
 
 lexA = gene(
     name='lexA',
