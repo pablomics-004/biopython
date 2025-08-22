@@ -77,7 +77,7 @@ class ncRNA():
             seq: str = '', 
             gc_con: float = 0, 
             sec_struct: str = 'hairpin', 
-            celular_locat: str = 'cytosol',
+            cellular_loc: str = 'cytosol',
             seed_seq: str = None,
             complex: str = '',
             circular: bool = False
@@ -86,10 +86,10 @@ class ncRNA():
         self.gc_con = gc_con
         self.seq = seq.upper().replace('T', 'U')
         self.second_struct = sec_struct.lower()
-        self.celular_locat = celular_locat.lower()
+        self.cellular_loc = cellular_loc.lower()
         self.circular = circular
         self.seed_seq = seed_seq
-        self.complex = complex
+        self.associated_complex = complex
 
     def ncRNA_type(self) -> str:
         if self.circular:
@@ -101,9 +101,14 @@ class ncRNA():
         elif 'PIWI' in self.complex:
             return 'piRNA'
         else:
-            raise ValueError(f"\n[WARNING] No match for the given ncRNA\n")
+            raise ValueError(f"\n[ERROR] No match for the given ncRNA\n")
         
     def seed_sequence(self, ncrna_type: str = ''):
         if ncrna_type != 'miRNA':
             return None
-        return self.seq[1:9]
+        return self.seq[1:8]
+    
+    def gc_percentage(self) -> None:
+        self.gc_con += (
+            (total_gc := self.seq.count('G') + self.seq.count('C')) / (total_gc + self.seq.count('A') + self.seq.count('T'))
+        ) * 100
