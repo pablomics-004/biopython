@@ -3,19 +3,18 @@ class gene():
     def __init__(
             self, 
             name: str, 
-            length: int = 0, 
             seq: str = '', 
             gc_con: float = 0.0, 
             organism: str = '', 
             lecture_frame: int = 1, 
     ):
         self.name = name
-        self.length = length
+        self.length = len(seq)
         self.seq = seq.upper()
         self.gc_percentage = gc_con
         self.organism = organism
         self.frame = lecture_frame
-        self.nt = ''
+        self.nt_type = ''
 
     def gc_content(self) -> None:
         self.gc_percentage = (

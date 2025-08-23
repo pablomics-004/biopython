@@ -54,7 +54,7 @@ class tRNA(class1.gene):
             'C' : 'G',
             'G' : 'C'
         }
-        return ''.join(comp.get(self.anticodon[i], self.anticodon[i]) for i in range(len(self.anticodon)-1,-1,-1))
+        return ''.join(comp.get(b, b) for b in self.anticodon[::-1])
     
     def noncanonical_bases(self) -> bool:
         allowed = {'A','T','C','G'}
