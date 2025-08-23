@@ -19,7 +19,7 @@ class gene():
     def gc_content(self) -> None:
         total_gc = self.seq.count('G') + self.seq.count('C')
         total = total_gc + self.seq.count('A') + self.seq.count('T')
-        self.gc_con = ((total_gc / total) * 100) if total > 0 else None
+        self.gc_percentage = ((total_gc / total) * 100) if total > 0 else None
     
     def seq_length(self) -> int:
         self.length = len(self.seq)

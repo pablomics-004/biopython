@@ -123,20 +123,21 @@ class Protein(tRNA):
     
     def codons_2_aa(self):
         codons = self.first_frame()
-        self.aminoacids = ''.join(
-            (aa if aa != 'stop' else '')
-            for aa in (self.CODON_TO_AA.get(c) for c in codons)
-            if aa and aa != 'stop'
-        )
-    
+        aa_list = []
+        for c in codons:
+            aa = self.CODON_TO_AA.get(c)
+            if aa == 'stop':
+                break
+            if aa:
+                aa_list.append(aa)
+        self.aminoacids = '-'.join(aa_list)     
 
-    def seq_length(self, frame: int = 1) -> dict[str, int]:
+    def seq_length(self) -> dict[str, int]:
+        nt_len = super().seq_length()
         if not self.aminoacids:
             self.codons_2_aa()
-        return {
-            'Nucleotide seq' : super().seq_length(),
-            'Aminoacid seq' : len(self.aminoacids.split('-')) if '-' in self.aminoacids else len(self.aminoacids) if self.aminoacids else 0
-        }
+        aa_len = len(self.aminoacids.split('-')) if self.aminoacids else 0
+        return {'Nucleotide seq': nt_len, 'Aminoacid seq': aa_len}
     
 class ncRNA():
     def __init__(self, seq: str = '', gc_con: float = 0, sec_struct: str = 'hairpin',
