@@ -45,7 +45,7 @@ class tRNA(class1.gene):
         self.loops = loops
         self.discrim_base = discrim_base
         self.acceptor_stem = acceptor_stem
-        self.seq = seq.upper().replace('T', 'U')
+        self.seq = self.seq.replace('T', 'U')
     
     def paired_codon(self) -> str:
         comp = {
@@ -57,78 +57,98 @@ class tRNA(class1.gene):
         return ''.join(comp.get(b, b) for b in self.anticodon[::-1])
     
     def noncanonical_bases(self) -> bool:
-        allowed = {'A','T','C','G'}
-        return True if any(c not in allowed for c in self.anticodon) else False
+        allowed = {'A','U','C','G'}
+        return any(c not in allowed for c in self.anticodon)
 
     def codon_translator(self) -> str:
-        if (l := len(self.anticodon)) > 3 or l < 3:
+        if (l := len(anti := self.anticodon)) != 3:
             raise ValueError(f"\n[ERROR] Anticodon must have 3 bases length, it has {l}\n")
         
         if self.noncanonical_bases():
-            raise ValueError(f'\n[ERROR] The anticodon sequence {self.anticodon} contains noncanonical bases\n')
+            raise ValueError(f'\n[ERROR] The anticodon sequence {anti} contains noncanonical bases\n')
         
         comp_codon = self.paired_codon()
-        aa = self.CODON_TO_AA.get(comp_codon, None)
+        aa = self.CODON_TO_AA.get(comp_codon)
             
         if not aa:
-            raise ValueError(f"\n[ERROR] No aminoacid could match {self.anticodon} anticodon\n")
+            raise ValueError(f"\n[ERROR] No aminoacid could match {anti} anticodon\n")
         return aa
     
 class Protein(tRNA):
-    def __init__(self, name = '', length = 0, seq = '', gc_con = 0, lecture_frame = 1, anticodon = 'CAU', loops = True, discrim_base = 'A', acceptor_stem = True):
-        super().__init__(name, length, seq, gc_con, lecture_frame, anticodon, loops, discrim_base, acceptor_stem)
+    def __init__(
+        self, 
+        name: str = '', 
+        length: int = 0, 
+        seq: str = '', 
+        gc_con: float = 0.0, 
+        lecture_frame: int = 1, 
+        anticodon: str = 'CAU',
+        loops: bool = True,
+        discrim_base: str = 'A',
+        acceptor_stem: bool = True
+    ):
+        super().__init__(name=name, length=length, seq=seq, gc_con=gc_con,
+                         lecture_frame=lecture_frame, anticodon=anticodon,
+                         loops=loops, discrim_base=discrim_base, acceptor_stem=acceptor_stem)
         self.aminoacids = ''
 
     @staticmethod
-    def has_nocanonical(bases: str) -> bool:
-        allowed = {'A','T','C','G'}
-        return True if any(b not in allowed for b in bases) else False
+    def has_noncanonical(bases: str) -> bool:
+        allowed = {'A','U','C','G'}
+        return any(b not in allowed for b in bases.upper())
 
     @staticmethod
-    def anticodon_method(codon: str) -> str:
+    def anticodon_method(anticodon: str) -> str:
         comp = {
             'A' : 'U',
             'U' : 'A',
             'C' : 'G',
             'G' : 'C'
         }
-        return ''.join(comp.get(b, b) for b in reversed(codon))
+        anti = anticodon.upper().replace('T','U')
+        return ''.join(comp.get(b, b) for b in anti[::-1])
     
     def codon_translator(self, anticodon: str) -> str: # Polymorphism
-        if (l := len(anticodon)) > 3 or l < 3:
+        if (l := len(anti := anticodon)) != 3:
             raise ValueError(f"\n[ERROR] Anticodon must have 3 bases length, it has {l}\n")
         
-        if self.has_nocanonical(anticodon):
-            raise ValueError(f'\n[ERROR] The anticodon sequence {anticodon} contains noncanonical bases\n')
-        
-        aa = self.CODON_TO_AA.get(anticodon, None)
+        if self.has_nocanonical(anti):
+            raise ValueError(f'\n[ERROR] The anticodon sequence {anti} contains noncanonical bases\n')
+        codon = self.anticodon_method(anti)
+        aa = self.CODON_TO_AA.get(anti, None)
             
         if not aa:
-            raise ValueError(f"\n[ERROR] No aminoacid could match {anticodon} anticodon\n")
+            raise ValueError(f"\n[ERROR] No aminoacid could match {anti} anticodon\n")
         return aa
     
     def codons_2_aa(self):
-        codons = self.first_frame()[::-1]
-        self.aminoacids = ''.join(self.codon_translator(ac) for ac in [self.anticodon_method(c) for c in codons])
+        codons = self.first_frame()
+        self.aminoacids = ''.join(
+            (aa if aa != 'stop' else '')
+            for aa in (self.CODON_TO_AA.get(c) for c in codons)
+            if aa and aa != 'stop'
+        )
+    
+
+    def seq_length(self, frame: int = 1) -> dict[str, int]:
+        if not self.aminoacids:
+            self.codons_2_aa()
+        return {
+            'Nucleotide seq' : super().seq_length(),
+            'Aminoacid seq' : len(self.aminoacids.split('-')) if '-' in self.aminoacids else len(self.aminoacids) if self.aminoacids else 0
+        }
     
 class ncRNA():
-    def __init__(
-            self, 
-            seq: str = '', 
-            gc_con: float = 0, 
-            sec_struct: str = 'hairpin', 
-            cellular_loc: str = 'cytosol',
-            seed_seq: str = None,
-            complex: str = '',
-            circular: bool = False
-    ):
+    def __init__(self, seq: str = '', gc_con: float = 0, sec_struct: str = 'hairpin',
+                 cellular_loc: str = 'cytosol', seed_seq: str = None, complex: str = '',
+                 circular: bool = False):
         self.length = len(seq)
         self.gc_con = gc_con
         self.seq = seq.upper().replace('T', 'U')
         self.second_struct = sec_struct.lower()
         self.cellular_loc = cellular_loc.lower()
         self.circular = circular
-        self.seed_seq = seed_seq
+        self.seed_seq = seed_seq.upper().replace('T','U') if seed_seq else None
         self.associated_complex = complex
 
     def ncRNA_type(self) -> str:
@@ -138,7 +158,7 @@ class ncRNA():
             return 'lncRNA'
         elif self.seed_seq:
             return 'miRNA'
-        elif 'PIWI' in self.complex:
+        elif 'PIWI' in self.associated_complex:
             return 'piRNA'
         else:
             raise ValueError(f"\n[ERROR] No match for the given ncRNA\n")
@@ -149,6 +169,6 @@ class ncRNA():
         return self.seq[1:8]
     
     def gc_percentage(self) -> None:
-        self.gc_con = (
-            (total_gc := self.seq.count('G') + self.seq.count('C')) / (total_gc + self.seq.count('A') + self.seq.count('T'))
-        ) * 100
+        total_gc = self.seq.count('G') + self.seq.count('C')
+        total = total_gc + self.seq.count('A') + self.seq.count('U')
+        self.gc_con = ((total_gc / total) * 100) if total > 0 else None

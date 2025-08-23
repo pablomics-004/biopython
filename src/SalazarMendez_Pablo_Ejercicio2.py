@@ -9,7 +9,7 @@ class gene():
             lecture_frame: int = 1, 
     ):
         self.name = name
-        self.length = len(seq)
+        self.length = 0
         self.seq = seq.upper()
         self.gc_percentage = gc_con
         self.organism = organism
@@ -17,12 +17,13 @@ class gene():
         self.nt_type = ''
 
     def gc_content(self) -> None:
-        self.gc_percentage = (
-            (total_gc := self.seq.count('G') + self.seq.count('C')) / (total_gc + self.seq.count('A') + self.seq.count('T'))
-        ) * 100
+        total_gc = self.seq.count('G') + self.seq.count('C')
+        total = total_gc + self.seq.count('A') + self.seq.count('T')
+        self.gc_con = ((total_gc / total) * 100) if total > 0 else None
     
-    def len_calc(self) -> None:
-        self.length += len(self.seq)
+    def seq_length(self) -> int:
+        self.length = len(self.seq)
+        return self.length
 
     def first_frame(self):
         frame_codons = []
@@ -60,7 +61,7 @@ class gene():
                 raise ValueError('\n[ERROR] No such frame have been found.\n')
     
     def base_type(self) -> None:
-        self.nt = 'RNA' if 'U' in self.seq else 'DNA'
+        self.nt_type = 'RNA' if 'U' in self.seq else 'DNA'
 
 lexA = gene(
     name='lexA',
