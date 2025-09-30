@@ -24,9 +24,9 @@ def my_parser() -> ap.Namespace:
 
     parser.add_argument(
         '-a', '--all_frames',
-        action='store_true',
+        type=str,
         required=False,
-        help='If set, the six reading frames will be tested.'
+        help='If "True", the six reading frames will be tested.'
     )
 
     return parser.parse_args()
@@ -85,11 +85,11 @@ def finding_orfs(nt_seq: str, all_frames: bool = False) -> dict[int, list[Seq]]:
     # Reading frames
     for i in range(3):
         orfs_seq.setdefault(i+1, [])
-        valid_start = [pos for pos in nt_search(dseq,start_codon)[1:] if pos%3 == i]
+        valid_start = [pos for pos in nt_search(dseq,start_codon)[1:] if pos%3 == i] # Match with its RF
         for start_idx in valid_start:
             cand_stops = (pos for pos in range(start_idx+3, L-2, 3) if dseq[pos:pos+3] in stop_codons)
             stop_idx = next(cand_stops, None)
-            orf_end_excl = (stop_idx+3) if stop_idx is not None else (L - ((L - start_idx)%3))
+            orf_end_excl = (stop_idx+3) if stop_idx is not None else (L - ((L - start_idx)%3)) # Exclude
             orfs_seq[i+1].append(dna_seq[start_idx:orf_end_excl].translate(to_stop=True))
 
         if all_frames:
@@ -131,7 +131,7 @@ def greatest_chain(orfs: dict[int, list[Seq]]) -> list[str]:
 
 def main():
     args = my_parser()
-    orfs_seq = finding_orfs(args.sequence, args.all_frames)
+    orfs_seq = finding_orfs(args.sequence, True if args.all_frames == 'True' else False)
     largest_orf = greatest_chain(orfs_seq)
     print(
         f'\nThe largest(s) ORF(s) found in {args.sequence} '
@@ -139,6 +139,8 @@ def main():
     )
     for e in largest_orf:
         print(e)
+
+    print('\n')
 
 if __name__ == '__main__':
     main()
