@@ -132,13 +132,15 @@ def greatest_chain(orfs: dict[int, list[Seq]]) -> list[str]:
 def main():
     args = my_parser()
     orfs_seq = finding_orfs(args.sequence, True if args.all_frames == 'True' else False)
+    # for k, v in orfs_seq.items():
+    #     print(f'Reading Frame: {k} - ORFs {v}')
     largest_orf = greatest_chain(orfs_seq)
     print(
         f'\nThe largest(s) ORF(s) found in {args.sequence} '
         'was(were):\n'
     )
     for e in largest_orf:
-        print(e)
+        print(f'{e} - length {len(e)}')
 
     print('\n')
 
